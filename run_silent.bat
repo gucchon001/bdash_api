@@ -29,7 +29,7 @@ if exist "%VENV_PATH%\Scripts\activate.bat" (
 
 REM モジュールを実行
 echo [%date% %time%] モジュールを実行しています: %MODULE_NAME%
-python -m %MODULE_NAME%
+python -m %MODULE_NAME% --silent
 if errorlevel 1 (
     echo [%date% %time%] ERROR: モジュールの実行中にエラーが発生しました。
     exit /b 1

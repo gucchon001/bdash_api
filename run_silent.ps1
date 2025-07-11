@@ -139,11 +139,12 @@ Write-Log "Starting execution of $ScriptToRun..."
 Write-Log "Environment: $AppEnv"
 
 try {
+    $pythonArgs = @("--silent")
     if ($TestMode) {
-        python -m $ScriptToRun $TestMode
-    } else {
-        python -m $ScriptToRun
+        $pythonArgs += $TestMode
     }
+    
+    python -m $ScriptToRun @pythonArgs
     
     if ($LASTEXITCODE -ne 0) {
         throw "Script execution returned error code: $LASTEXITCODE"

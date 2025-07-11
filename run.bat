@@ -27,7 +27,11 @@ if exist "%VENV_PATH%\Scripts\activate.bat" (
 
 REM モジュールを実行
 echo [INFO] モジュールを実行しています: %MODULE_NAME%
-python -m %MODULE_NAME%
+if "%SILENT_MODE%"=="true" (
+    python -m %MODULE_NAME% --silent
+) else (
+    python -m %MODULE_NAME%
+)
 if errorlevel 1 (
     echo [ERROR] モジュールの実行中にエラーが発生しました。
     if "%SILENT_MODE%"=="false" pause
