@@ -1,6 +1,13 @@
 @echo off
 chcp 65001 >nul
 
+REM ==============================================
+REM 引数処理：--silent または /silent でサイレントモード
+REM ==============================================
+set "SILENT_MODE=false"
+if "%1"=="--silent" set "SILENT_MODE=true"
+if "%1"=="/silent" set "SILENT_MODE=true"
+
 REM 仮想環境のパスを設定（必要に応じて変更してください）
 set "VENV_PATH=.\venv"
 
@@ -14,7 +21,7 @@ if exist "%VENV_PATH%\Scripts\activate.bat" (
 ) else (
     echo [ERROR] 仮想環境が見つかりません: %VENV_PATH%
     echo 仮想環境を作成するか、正しいパスを設定してください。
-    pause
+    if "%SILENT_MODE%"=="false" pause
     exit /b 1
 )
 
@@ -23,7 +30,7 @@ echo [INFO] モジュールを実行しています: %MODULE_NAME%
 python -m %MODULE_NAME%
 if errorlevel 1 (
     echo [ERROR] モジュールの実行中にエラーが発生しました。
-    pause
+    if "%SILENT_MODE%"=="false" pause
     exit /b 1
 )
 
@@ -32,4 +39,4 @@ echo [INFO] 仮想環境をディアクティブ化しています...
 deactivate
 
 echo [INFO] 実行が完了しました。
-pause
+if "%SILENT_MODE%"=="false" pause
