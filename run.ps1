@@ -8,7 +8,7 @@ param(
     [switch]$Help,
     [switch]$NoInstall,
     [switch]$Force,
-    [switch]$Interactive  # Use this flag for interactive mode with colors and pause
+    [switch]$Verbose  # Use this flag for verbose mode with colors and pause
 )
 
 # Help display
@@ -22,12 +22,12 @@ if ($Help) {
     Write-Host "  -Test        : Run in test mode with additional logging"
     Write-Host "  -NoInstall   : Skip package installation check"
     Write-Host "  -Force       : Force recreate virtual environment"
-    Write-Host "  -Interactive : Interactive mode with colors and pause (default is silent mode)"
+    Write-Host "  -Verbose     : Verbose mode with colors and pause (default is silent mode)"
     Write-Host "  -Help        : Show this help"
     Write-Host ""
     Write-Host "Examples:"
     Write-Host "  .\run.ps1                              # Run in silent mode (Task Scheduler friendly)"
-    Write-Host "  .\run.ps1 -Interactive                 # Run in interactive mode with colors"
+    Write-Host "  .\run.ps1 -Verbose                     # Run in verbose mode with colors"
     Write-Host "  .\run.ps1 -Environment dev -Test       # Run in development with test mode"
     Write-Host "  .\run.ps1 -Module spreadsheet          # Run specific module"
     Write-Host "  .\run.ps1 -Force                       # Force recreate virtual environment"
@@ -42,7 +42,7 @@ $TestMode = ""
 $LogFile = ""
 
 # Initialize logging for Silent mode (default behavior)
-if (-not $Interactive) {
+if (-not $Verbose) {
     # Create logs directory if it doesn't exist
     if (-not (Test-Path "logs")) {
         New-Item -ItemType Directory -Path "logs" -Force | Out-Null
@@ -50,16 +50,16 @@ if (-not $Interactive) {
     $LogFile = "logs\run_$(Get-Date -Format 'yyyyMMdd_HHmmss').log"
 }
 
-# Function to write output (console or log file based on Interactive mode)
+# Function to write output (console or log file based on Verbose mode)
 function Write-Output-Message {
     param([string]$Message, [string]$Color = "White")
-    if (-not $Interactive) {
+    if (-not $Verbose) {
         # Silent mode: write to log file
         $Timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
         $LogMessage = "[$Timestamp] $Message"
         Add-Content -Path $LogFile -Value $LogMessage -Encoding UTF8
     } else {
-        # Interactive mode: write to console with colors
+        # Verbose mode: write to console with colors
         if ($Color -ne "White") {
             Write-Host $Message -ForegroundColor $Color
         } else {
@@ -68,7 +68,7 @@ function Write-Output-Message {
     }
 }
 
-if ($Interactive) {
+if ($Verbose) {
     Write-Host "=== PowerShell Application Runner ===" -ForegroundColor Cyan
     Write-Host ""
 } else {
@@ -89,7 +89,7 @@ switch ($Environment.ToLower()) {
         Write-Output-Message "[CONFIG] Environment: Production" "Green"
     }
     default {
-        if (-not $Interactive) {
+        if (-not $Verbose) {
             Write-Output-Message "[ERROR] Invalid environment. Please specify 'dev' or 'prd'."
         } else {
             Write-Error "Invalid environment. Please specify 'dev' or 'prd'."
@@ -114,7 +114,7 @@ try {
     }
     Write-Output-Message "[CHECK] Python found: $pythonVersion" "Green"
 } catch {
-    if (-not $Interactive) {
+    if (-not $Verbose) {
         Write-Output-Message "[ERROR] Python is not installed or not in PATH."
         Write-Output-Message "[ERROR] Please install Python and ensure it's added to your PATH environment variable."
     } else {
@@ -135,7 +135,7 @@ if (-not (Test-Path "$VenvPath\Scripts\Activate.ps1")) {
     Write-Output-Message "[SETUP] Virtual environment not found. Creating..." "Yellow"
     python -m venv $VenvPath
     if ($LASTEXITCODE -ne 0) {
-        if (-not $Interactive) {
+        if (-not $Verbose) {
             Write-Output-Message "[ERROR] Failed to create virtual environment."
         } else {
             Write-Error "Failed to create virtual environment."
@@ -151,7 +151,7 @@ if (Test-Path "$VenvPath\Scripts\Activate.ps1") {
     & "$VenvPath\Scripts\Activate.ps1"
     Write-Output-Message "[VENV] Virtual environment activated." "Green"
 } else {
-    if (-not $Interactive) {
+    if (-not $Verbose) {
         Write-Output-Message "[ERROR] Failed to activate virtual environment. Activate.ps1 not found."
     } else {
         Write-Error "Failed to activate virtual environment. Activate.ps1 not found."
@@ -162,7 +162,7 @@ if (Test-Path "$VenvPath\Scripts\Activate.ps1") {
 # Install packages if needed (unless NoInstall is specified)
 if (-not $NoInstall) {
     if (-not (Test-Path "requirements.txt")) {
-        if (-not $Interactive) {
+        if (-not $Verbose) {
             Write-Output-Message "[WARN] requirements.txt not found. Skipping package installation."
         } else {
             Write-Warning "requirements.txt not found. Skipping package installation."
@@ -184,7 +184,7 @@ if (-not $NoInstall) {
         
         if ($NeedInstall) {
             Write-Output-Message "[DEPS] Installing required packages..." "Yellow"
-            if (-not $Interactive) {
+            if (-not $Verbose) {
                 pip install --upgrade pip --quiet
                 pip install -r requirements.txt --quiet
             } else {
@@ -192,7 +192,7 @@ if (-not $NoInstall) {
                 pip install -r requirements.txt
             }
             if ($LASTEXITCODE -ne 0) {
-                if (-not $Interactive) {
+                if (-not $Verbose) {
                     Write-Output-Message "[ERROR] Failed to install packages. Check your requirements.txt file."
                 } else {
                     Write-Error "Failed to install packages. Check your requirements.txt file."
@@ -210,7 +210,7 @@ if (-not $NoInstall) {
 }
 
 # Display execution information
-if ($Interactive) {
+if ($Verbose) {
     Write-Host ""
     Write-Host "=== Execution Information ===" -ForegroundColor Cyan
     Write-Host "Environment: $AppEnv"
@@ -236,7 +236,7 @@ try {
     if ($TestMode) {
         $pythonArgs += $TestMode
     }
-    if (-not $Interactive) {
+    if (-not $Verbose) {
         $pythonArgs += "--silent"
     }
     
@@ -250,12 +250,12 @@ try {
         throw "Script execution returned error code: $LASTEXITCODE"
     }
     
-    if ($Interactive) {
+    if ($Verbose) {
         Write-Host ""
     }
     Write-Output-Message "[SUCCESS] Execution completed successfully." "Green"
 } catch {
-    if (-not $Interactive) {
+    if (-not $Verbose) {
         Write-Output-Message "[ERROR] Script execution failed: $_"
         Write-Output-Message "[ERROR] Check the log file for details: $LogFile"
     } else {
@@ -267,12 +267,12 @@ try {
         Write-Host "  2. Verify your configuration files in config/ directory"
         Write-Host "  3. Run with -Environment dev -Test for more detailed logging"
         Write-Host "  4. Use -Force to recreate virtual environment if needed"
-        Write-Host "  5. Use -Interactive for interactive mode with colors"
+        Write-Host "  5. Use -Verbose for verbose mode with colors"
     }
     exit 1
 }
 
-if ($Interactive) {
+if ($Verbose) {
     Write-Host ""
     Write-Host "=== Execution Complete ===" -ForegroundColor Cyan
 } else {
